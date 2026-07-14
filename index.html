@@ -1,95 +1,274 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<title>漫画ビューア</title>
-<style>
-  body {
-    background-color: #f0f0f0;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-img {
-  max-width: 100%;  /* 幅を画面いっぱいに */
-  display: block;    /* 下の隙間を消す */
-  margin: 0;         /* 余白をゼロに */
+import { useState } from 'react';
+import { Check, X, RefreshCw, Sparkles } from 'lucide-react';
+
+const MONTHS = [
+  { num: 1, name: '睦月', reading: 'むつき' },
+  { num: 2, name: '如月', reading: 'きさらぎ' },
+  { num: 3, name: '弥生', reading: 'やよい' },
+  { num: 4, name: '卯月', reading: 'うづき' },
+  { num: 5, name: '皐月', reading: 'さつき' },
+  { num: 6, name: '水無月', reading: 'みなづき' },
+  { num: 7, name: '文月', reading: 'ふみづき' },
+  { num: 8, name: '葉月', reading: 'はづき' },
+  { num: 9, name: '長月', reading: 'ながつき' },
+  { num: 10, name: '神無月', reading: 'かんなづき' },
+  { num: 11, name: '霜月', reading: 'しもつき' },
+  { num: 12, name: '師走', reading: 'しわす' },
+];
+
+const COLORS = {
+  bgTop: '#26365f',
+  bgBottom: '#0e1830',
+  panel: '#1c2c52',
+  panel2: '#263a6d',
+  panelBorder: 'rgba(201,162,75,0.28)',
+  gold: '#c9a24b',
+  goldBright: '#e6c778',
+  cream: '#f3ead9',
+  creamDim: 'rgba(243,234,217,0.6)',
+  green: '#7f9a5e',
+  vermillion: '#b3492f',
+};
+
+function shuffleMonths() {
+  const a = [...MONTHS];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
-</style>
-</head>
-<body>
 
-<!-- 固定リンク -->
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/1/02.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/1/03.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/1/04.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/1/05.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/1/06.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/1/07.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/8/025.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/8/043.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/17/12.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/7/03.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/18/47.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/18/78.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/18/79.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/18/82.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/18/84.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/18/85.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/18/86.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/18/87.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/18/88.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/18/89.webp">
-<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/18/90.webp">
+export default function MonthNameQuiz() {
+  const [mode, setMode] = useState('name2num'); // 'name2num' | 'num2name'
+  const [order, setOrder] = useState(() => shuffleMonths());
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answers, setAnswers] = useState([]);
 
-<!-- 22/01～22/61 -->
-<script>
-for(let i=1;i<=61;i++){
-  let num = String(i).padStart(2,'0');
-  document.write('<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/22/'+num+'.webp">');
+  const total = MONTHS.length;
+  const finished = currentIndex >= total;
+  const current = order[currentIndex];
+
+  function resetQuiz(newMode) {
+    setMode(newMode);
+    setOrder(shuffleMonths());
+    setCurrentIndex(0);
+    setAnswers([]);
+  }
+
+  function handleSwitch() {
+    resetQuiz(mode === 'name2num' ? 'num2name' : 'name2num');
+  }
+
+  function handleRetry() {
+    resetQuiz(mode);
+  }
+
+  function handleAnswer(value) {
+    if (finished) return;
+    const q = order[currentIndex];
+    let userDisplay, correctDisplay, isCorrect;
+    if (mode === 'name2num') {
+      userDisplay = `${value}月`;
+      correctDisplay = `${q.num}月`;
+      isCorrect = value === q.num;
+    } else {
+      userDisplay = value;
+      correctDisplay = q.name;
+      isCorrect = value === q.name;
+    }
+    setAnswers((prev) => [
+      ...prev,
+      { num: q.num, name: q.name, reading: q.reading, userDisplay, correctDisplay, correct: isCorrect },
+    ]);
+    setCurrentIndex((prev) => prev + 1);
+  }
+
+  const score = answers.filter((a) => a.correct).length;
+
+  function dotStyle(i) {
+    if (finished) {
+      const a = answers[i];
+      return {
+        backgroundColor: a.correct ? COLORS.green : COLORS.vermillion,
+        borderColor: a.correct ? COLORS.green : COLORS.vermillion,
+      };
+    }
+    if (i < currentIndex) {
+      return { backgroundColor: COLORS.gold, borderColor: COLORS.gold };
+    }
+    if (i === currentIndex) {
+      return {
+        backgroundColor: 'transparent',
+        borderColor: COLORS.gold,
+        boxShadow: '0 0 0 3px rgba(201,162,75,0.25)',
+      };
+    }
+    return { backgroundColor: 'transparent', borderColor: 'rgba(243,234,217,0.25)' };
+  }
+
+  function scoreMessage() {
+    if (score === total) return '満点です。花丸を差し上げます。';
+    if (score >= total * 0.8) return 'よくできました。あと少しで満点です。';
+    if (score >= total * 0.5) return '半分以上正解。着実に覚えていますね。';
+    return 'まずは睦月から順に、ゆっくり覚えていきましょう。';
+  }
+
+  const sortedAnswers = [...answers].sort((a, b) => a.num - b.num);
+
+  return (
+    <div
+      className="min-h-screen w-full flex justify-center px-4 py-8"
+      style={{
+        background: `radial-gradient(circle at 50% -10%, ${COLORS.bgTop} 0%, ${COLORS.bgBottom} 65%)`,
+        fontFamily: "'Zen Maru Gothic', sans-serif",
+      }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
+      `}</style>
+
+      <div className="w-full max-w-md flex flex-col items-center">
+        {/* header */}
+        <h1
+          className="text-2xl tracking-widest mt-2"
+          style={{ fontFamily: "'Shippori Mincho', serif", color: COLORS.goldBright }}
+        >
+          月の異名帳
+        </h1>
+        <p className="text-xs mt-1 mb-5" style={{ color: COLORS.creamDim }}>
+          睦月から師走まで、旧暦の月名を覚えよう
+        </p>
+
+        {/* mode switch */}
+        <button
+          onClick={handleSwitch}
+          className="flex items-center gap-2 px-4 py-2 rounded-full text-xs mb-6 transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+          style={{
+            backgroundColor: COLORS.panel2,
+            border: `1px solid ${COLORS.panelBorder}`,
+            color: COLORS.cream,
+          }}
+        >
+          <RefreshCw size={14} style={{ color: COLORS.gold }} />
+          {mode === 'name2num' ? '異名 → 数字（出題形式を切替）' : '数字 → 異名（出題形式を切替）'}
+        </button>
+
+        {/* progress dots */}
+        <div className="flex flex-wrap justify-center gap-2 mb-2 max-w-xs">
+          {order.map((_, i) => (
+            <span
+              key={i}
+              className="rounded-full transition-all"
+              style={{ width: 12, height: 12, border: '2px solid', ...dotStyle(i) }}
+            />
+          ))}
+        </div>
+        <p className="text-xs mb-6" style={{ color: COLORS.creamDim }}>
+          {finished ? `全${total}問 終了` : `第${currentIndex + 1}問 / ${total}問`}
+        </p>
+
+        {!finished ? (
+          <>
+            {/* question card */}
+            <div
+              className="w-full rounded-2xl px-6 py-10 flex flex-col items-center mb-6"
+              style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.panelBorder}` }}
+            >
+              <p className="text-xs mb-4" style={{ color: COLORS.creamDim }}>
+                {mode === 'name2num' ? 'この異名は何月?' : 'この月の異名は?'}
+              </p>
+              <p
+                className="text-5xl tracking-wide"
+                style={{ fontFamily: "'Shippori Mincho', serif", color: COLORS.cream }}
+              >
+                {mode === 'name2num' ? current.name : `${current.num}月`}
+              </p>
+            </div>
+
+            {/* answer grid */}
+            {mode === 'name2num' ? (
+              <div className="grid grid-cols-4 gap-2 w-full">
+                {MONTHS.map((m) => (
+                  <button
+                    key={m.num}
+                    onClick={() => handleAnswer(m.num)}
+                    className="py-3 rounded-xl text-sm font-bold transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                    style={{ backgroundColor: COLORS.panel2, border: `1px solid ${COLORS.panelBorder}`, color: COLORS.cream }}
+                  >
+                    {m.num}月
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2 w-full">
+                {MONTHS.map((m) => (
+                  <button
+                    key={m.num}
+                    onClick={() => handleAnswer(m.name)}
+                    className="py-3 rounded-xl flex flex-col items-center transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                    style={{ backgroundColor: COLORS.panel2, border: `1px solid ${COLORS.panelBorder}` }}
+                  >
+                    <span className="text-base font-bold" style={{ color: COLORS.cream }}>{m.name}</span>
+                    <span className="text-xs mt-0.5" style={{ color: COLORS.creamDim }}>{m.reading}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {/* result */}
+            <div
+              className="w-full rounded-2xl px-6 py-8 flex flex-col items-center mb-6"
+              style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.panelBorder}` }}
+            >
+              {score === total && <Sparkles size={22} style={{ color: COLORS.gold }} className="mb-2" />}
+              <p className="text-5xl font-bold" style={{ fontFamily: "'Shippori Mincho', serif", color: COLORS.goldBright }}>
+                {score} <span className="text-xl" style={{ color: COLORS.creamDim }}>/ {total}</span>
+              </p>
+              <p className="text-xs mt-3 text-center" style={{ color: COLORS.cream }}>{scoreMessage()}</p>
+            </div>
+
+            <div className="w-full flex flex-col gap-2 mb-6">
+              {sortedAnswers.map((a) => (
+                <div
+                  key={a.num}
+                  className="flex items-center justify-between px-4 py-3 rounded-xl"
+                  style={{
+                    backgroundColor: COLORS.panel,
+                    borderLeft: `4px solid ${a.correct ? COLORS.green : COLORS.vermillion}`,
+                  }}
+                >
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold" style={{ color: COLORS.cream }}>
+                      {a.num}月　{a.name}（{a.reading}）
+                    </span>
+                    {!a.correct && (
+                      <span className="text-xs mt-1" style={{ color: COLORS.creamDim }}>
+                        あなたの回答: {a.userDisplay} ／ 正解: {a.correctDisplay}
+                      </span>
+                    )}
+                  </div>
+                  {a.correct ? (
+                    <Check size={18} style={{ color: COLORS.green }} />
+                  ) : (
+                    <X size={18} style={{ color: COLORS.vermillion }} />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={handleRetry}
+              className="w-full py-3 rounded-xl text-sm font-bold transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+              style={{ backgroundColor: COLORS.gold, color: COLORS.bgBottom }}
+            >
+              もう一度挑戦する
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
-</script>
-
-<!-- 23/01～23/76 -->
-<script>
-for(let i=1;i<=76;i++){
-  let num = String(i).padStart(2,'0');
-  document.write('<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/23/'+num+'.webp">');
-}
-</script>
-
-<!-- 24/02～24/91 -->
-<script>
-for(let i=2;i<=91;i++){
-  let num = String(i).padStart(2,'0');
-  document.write('<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/24/'+num+'.webp">');
-}
-</script>
-
-<!-- 25/01～25/99 -->
-<script>
-for(let i=1;i<=99;i++){
-  let num = String(i).padStart(2,'0');
-  document.write('<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/25/'+num+'.webp">');
-}
-</script>
-
-<!-- 30/49～30/83 -->
-<script>
-for(let i=49;i<=83;i++){
-  let num = String(i).padStart(2,'0');
-  document.write('<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/30/'+num+'.webp">');
-}
-</script>
-
-<!-- 31/02～31/93 -->
-<script>
-for(let i=2;i<=93;i++){
-  let num = String(i).padStart(2,'0');
-  document.write('<img loading="lazy" src="https://raw18.image-mangajp.site/mazasuwa-ling-pingu/31/'+num+'.webp">');
-}
-</script>
-
-</body>
-</html>
